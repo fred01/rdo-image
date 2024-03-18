@@ -46,7 +46,7 @@ RUN set -ex -o pipefail && apt-get install -y \
 RUN curl -s "https://get.sdkman.io" | bash
 SHELL ["/bin/bash", "-c"]
 RUN source "/root/.sdkman/bin/sdkman-init.sh"   \
-                && sdk install java 11.0.22-amzn \
+                && sdk install java 11.0.22-amzn
 
 ## Nodejs, npm, yarn
 RUN set -ex -o pipefail &&  \
@@ -73,7 +73,8 @@ RUN set -ex -o pipefail && \
     apt-get update && apt-get install -y kubectl && \
     kubectl version --client
 
-RUN echo "############################### Versions #####################################" && \
+RUN source "/root/.sdkman/bin/sdkman-init.sh" && \
+    echo "############################### Versions #####################################" && \
     java -version &&  \
     javac -version && \
     echo "" && \
