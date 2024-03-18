@@ -88,8 +88,6 @@ RUN source "/root/.sdkman/bin/sdkman-init.sh" && \
     echo "Npm: $(npm --version)" &&  \
     echo "Yarn: $(yarn --version)" && \
     echo "" && \
-    composer -V && \
-    echo "" && \
     docker --version &&  \
     docker compose version && \
     echo "" && \
