@@ -22,7 +22,7 @@ RUN apt-add-repository ppa:git-core/ppa -y && apt-get update
 
 RUN set -ex -o pipefail && apt-get install -y \
     # Useful utilities \
-    curl unzip wget socat man-db rsync moreutils vim lsof \
+    curl zip unzip wget socat man-db rsync moreutils vim lsof \
     # SSH related \
     openssh-server \
     # VCS \
@@ -31,29 +31,22 @@ RUN set -ex -o pipefail && apt-get install -y \
     jq \
     # C/C++ \
     build-essential cmake g++ m4 \
-    # JVM \
-    openjdk-8-jre-headless openjdk-11-jdk-headless openjdk-17-jdk-headless maven ant clojure scala \
     # Python 3 \
-    python3-matplotlib python3-numpy python3-pip python3-scipy python3-pandas python3-dev pipenv \
+    python3-pip python3-dev pipenv \
     # Python 2 \
     python2-dev python2-pip-whl \
     && \
-    # Setup Java \
-    update-alternatives --get-selections | grep usr/lib/jvm | awk '{print $1}' | \
-    grep -v jpackage | grep -v jexec | \
-    while IFS= read line; do echo $line; update-alternatives --set $line /usr/lib/jvm/java-11-openjdk-$TARGETARCH/bin/$line; done && \
-    java -version && javac -version && \
     # Prepare SSH \
     mkdir -p /run/sshd && \
-    # Check Python \
-    python3 --version && python2 --version && pip3 --version && \
     # Go \
     curl  -fsSL "https://dl.google.com/go/$(curl -fsSL https://go.dev/dl/?mode=json | jq -r  'map(select(.stable == true)) | max_by(.version) | .files[] | select(.arch == "'$TARGETARCH'" and .os == "linux") | .filename' )" -o /tmp/go.tar.gz && \
     tar -C /usr/local -xzf /tmp/go.tar.gz && rm /tmp/go.tar.gz && \
     for x in /usr/local/go/bin/*; do echo $x; ln -vs $x /usr/local/bin/$(basename $x); done && ls -la /usr/local/bin && go version
 
-
-ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk-$TARGETARCH
+RUN curl -s "https://get.sdkman.io" | bash
+SHELL ["/bin/bash", "-c"]
+RUN source "/root/.sdkman/bin/sdkman-init.sh"   \
+                && sdk install java 11.0.22-amzn \
 
 ## Nodejs, npm, yarn
 RUN set -ex -o pipefail &&  \
@@ -72,11 +65,7 @@ RUN DOCKER_VERSION_STRING="5:24.0.9-1~ubuntu.22.04~jammy"; \
     apt-get update && apt-get install -y docker-ce=$DOCKER_VERSION_STRING docker-ce-cli=$DOCKER_VERSION_STRING containerd.io docker-buildx-plugin docker-compose-plugin
 
 ## The awscli tools use a different naming scheme for arm64 builds
-RUN if [ "$TARGETARCH" == "arm64" ] ; \
-        then AWS_TOOLS_ARCH=aarch64 ; \
-        else AWS_TOOLS_ARCH=x86_64 ; \
-    fi && \
-    set -ex -o pipefail && \
+RUN set -ex -o pipefail && \
     # Kubernetes \
     echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v$KUBECTL_VERSION/deb/ /" | tee /etc/apt/sources.list.d/kubernetes.list && \
     mkdir -p /etc/apt/keyrings/ && \
@@ -93,12 +82,6 @@ RUN echo "############################### Versions #############################
     pip3 --version && \
     echo "" && \
     go version && \
-    echo "" && \
-    echo ".NET SDK" && \
-    if [ "$TARGETARCH" != "arm64" ] ; then dotnet --list-sdks ; else echo "Not available for arm64" ; fi && \
-    echo "" && \
-    echo ".NET Runtimes" && \
-    if [ "$TARGETARCH" != "arm64" ] ; then dotnet --list-runtimes ; else echo "Not available for arm64" ; fi && \
     echo "" && \
     echo "Nodejs: $(node --version)" &&  \
     echo "Npm: $(npm --version)" &&  \
