@@ -44,7 +44,6 @@ RUN set -ex -o pipefail && apt-get install -y \
     for x in /usr/local/go/bin/*; do echo $x; ln -vs $x /usr/local/bin/$(basename $x); done && ls -la /usr/local/bin && go version
 
 RUN curl -s "https://get.sdkman.io" | bash
-SHELL ["/bin/bash", "-c"]
 RUN source "/root/.sdkman/bin/sdkman-init.sh"   \
                 && sdk install java 11.0.22-amzn
 
